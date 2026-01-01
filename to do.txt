@@ -1,0 +1,29 @@
+1. group logic(group message, create, delete, etc)
+2. login ✅
+3. auth ✅
+4. message format
+5. message offline gather
+6. database for message
+7. encryption
+8. simple font end for testing
+
+database 
+1. account
+2. message
+3. group
+
+
+how websocket access database
+use query if the group data is not present in the memory
+if there is just use the memory/map
+
+routes : http crud
+websocket : web socket
+
+200: Success
+201: Created (after POST)
+400: Bad Request (invalid input)
+401: Unauthorized (not logged in)
+403: Forbidden (no permission)
+404: Not Found
+500: Server Error
