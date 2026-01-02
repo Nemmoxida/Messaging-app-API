@@ -57,8 +57,6 @@ export default function websocket(server) {
         }
       }
 
-      let clientData; // for searching the clientData
-
       const handler = handlers[payload.type];
       if (handler) {
         handler(socket, payload);
@@ -68,57 +66,18 @@ export default function websocket(server) {
         );
       }
 
-      // private message to a spesific user
-      if (payload.type === "private") {
-        const message = payload.message;
-        const target = [...clients.entries()].find(([socket, name]) => {
-          return name.Id == payload.target;
-        })?.[0];
-
-        clientData = clients.get(socket);
-
-        if (!target) {
-          return socket.send(
-            JSON.stringify({ status: "error", message: "No user exist" })
-          );
+      const pingClient = setInterval(() => {
+        if (socket.readyState === 1) {
+          socket.ping();
+          console.log("client alive");
+        } else {
+          clearInterval(pingClient);
         }
+      }, 30000);
 
-        // console.log(clientData);
-        const mail = {
-          origin: clientData.Id,
-          message: message,
-        };
-
-        target.send(JSON.stringify(mail));
-      }
-
-      if (payload.type === "broadcast") {
-        const message = payload.message;
-
-        clientData = clients.get(socket);
-
-        const mail = {
-          origin: clientData.Id,
-          message: message,
-        };
-
-        clients.forEach((name, socket) => {
-          socket.send(JSON.stringify(mail));
-        });
-      }
-    });
-
-    const pingClient = setInterval(() => {
-      if (socket.readyState === 1) {
-        socket.ping();
-        console.log("client alive");
-      } else {
-        clearInterval(pingClient);
-      }
-    }, 30000);
-
-    socket.on("close", () => {
-      console.log("client disconected");
+      socket.on("close", () => {
+        console.log("client disconected");
+      });
     });
   });
 }

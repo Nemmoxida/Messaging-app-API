@@ -39,7 +39,7 @@ export default function auth() {
 
       const respond = respondHanlder({ token: token }, 200, "Auth Completed");
 
-      return res.status(200).send(JSON.stringify(respond));
+      return res.status(200).json(respond);
     } catch (error) {
       error.statusCode = 500;
       return next(error);
