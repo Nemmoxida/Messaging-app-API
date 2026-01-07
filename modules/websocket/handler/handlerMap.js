@@ -1,24 +1,36 @@
+import connection from "../../../database/db.js";
+import dbHandler from "./dbHandler.js";
+import respondHandler from "./respondHandlerWS.js"; // respond format
+
 export const clients = new Map();
 
 let clientData; // for searching the clientData
+const respondPayloadFormat = {};
 
 const handlers = {
-  setName: (socket, payload) => {
-    clients.set(socket, { Id: payload.Id });
+  // Setting clients name or ID (basically login)
+  setName: async (socket, payload) => {
+    const db = connection;
+    const validation = await db.query(
+      "SELECT username FROM accounts WHERE username = $1",
+      [payload]
+    );
+    if (!validation.rows) {
+      return socket.send("Invalid username");
+    }
+    clients.set(socket, { Id: payload });
+    const respond = respondHandler({
+      event: "auth:login",
+      status: "success",
+      message: `Your name is now set to ${payload}`,
+    });
 
-    // const currentSocket = socket;
-    // const exist = [...clients.entries()].find(([socket, name]) => {
-    //   return socket == currentSocket;
-    // });
-
-    // if (exist) {
-    //   clients.delete(currentSocket);
-    // }
-
-    console.log(clients);
-    socket.send(`Your name is now set to ${payload.Id}`);
+    return socket.send(JSON.stringify(respond));
   },
-  private: (socket, payload) => {
+
+  // sending message to a spesific user
+  private: async (socket, payload) => {
+    console.log("trigger");
     const message = payload.message;
     const target = [...clients.entries()].find(([socket, name]) => {
       return name.Id == payload.target;
@@ -32,14 +44,43 @@ const handlers = {
       );
     }
 
-    // console.log(clientData);
+    const payloadDb = {
+      sender: clientData.Id,
+      content: message,
+      reciever: payload.target,
+    };
+
+    const dbMessage = await dbHandler(payloadDb);
+
     const mail = {
       origin: clientData.Id,
       message: message,
+      messageId: dbMessage,
     };
 
-    target.send(JSON.stringify(mail));
+    // respond to reciever
+    const respond = respondHandler({
+      event: "chat:recieved",
+      status: "success",
+      message: "you got mail",
+      data: mail,
+    });
+
+    target.send(JSON.stringify(respond));
+
+    // Respond to sender with success
+    const senderRespond = respondHandler({
+      event: "chat:sent",
+      status: "success",
+      message: "Message sent successfully",
+      data: {
+        message: message,
+      },
+    });
+    socket.send(JSON.stringify(senderRespond));
   },
+
+  // Send message to all user
   broadcast: (socket, payload) => {
     const message = payload.message;
 
@@ -47,12 +88,32 @@ const handlers = {
 
     const mail = {
       origin: clientData.Id,
+      type: "broadcast",
       message: message,
     };
 
-    clients.forEach((name, socket) => {
-      socket.send(JSON.stringify(mail));
+    // respond to reciever
+    const respond = respondHandler({
+      event: "chat:recieved",
+      status: "success",
+      message: "you got mail",
+      data: mail,
     });
+
+    clients.forEach((name, socket) => {
+      socket.send(JSON.stringify(respond));
+    });
+
+    // Respond to sender with success
+    const senderRespond = respondHandler({
+      event: "chat:sent",
+      status: "success",
+      message: "Message sent successfully",
+      data: {
+        message: message,
+      },
+    });
+    socket.send(JSON.stringify(senderRespond));
   },
 };
 

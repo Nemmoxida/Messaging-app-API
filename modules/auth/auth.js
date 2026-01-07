@@ -30,7 +30,7 @@ export default function auth() {
 
     try {
       const token = jwt.sign(
-        { user: validateUser.rows.username },
+        { username: validateUser.rows[0].username },
         process.env.SECRET_KEY,
         {
           expiresIn: "1h",
