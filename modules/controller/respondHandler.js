@@ -8,7 +8,7 @@ export default function respondHanlder(data, statusCode = 200, message) {
     status: "success",
     statusCode: statusCode,
     message: message || " ",
-    data: data,
+    data: data != null || undefined ? data : {},
     timeStamp: requestTime,
     requestId: requestId,
   };

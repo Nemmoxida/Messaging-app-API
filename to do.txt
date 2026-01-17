@@ -1,4 +1,7 @@
 1. group logic(group message, create, delete, etc)
+    creating group: using HTTP request, and then server will notify related user using WS (using clients MAP object data)
+
+
 2. login ✅
 3. auth ✅
 4. message format ✅
