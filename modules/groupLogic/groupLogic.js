@@ -8,22 +8,28 @@ const db = connection;
 
 export async function createGroup(req, res, next) {
   const { name, description } = req.body;
+  const userId = req.id;
   if (!name) {
     return next(new AppError("Group must have a name", 400));
   }
 
   try {
-    const id = uuidv4();
+    const groupId = uuidv4();
 
     const result = await db.query(
       "INSERT INTO groups(name, description, id) VALUES($1, $2, $3)",
-      [name, description, id]
+      [name, description, groupId],
+    );
+
+    const addOwner = await db.query(
+      "INSERT INTO group_member(role, group_id, user_id) VALUES('owner', $1, $2)",
+      [groupId, userId],
     );
 
     const respond = respondHanlder(
-      { id: id, name: name },
+      { groupId: groupId, name: name },
       201,
-      "Group successfully created"
+      "Group successfully created",
     );
     return res.status(201).json(respond);
   } catch (error) {
@@ -44,7 +50,7 @@ export function deleteGroup(req, res, next) {
     const respond = respondHanlder(
       { groupId: groupId },
       200,
-      "Group has been deleted"
+      "Group has been deleted",
     );
     return res.status(200).json(respond);
   } catch (error) {
@@ -65,12 +71,12 @@ export function changeGroupInfo(req, res, next) {
   try {
     const result = db.query(
       "UPDATE groups SET name = $1, description = $2 WHERE id = $3  ",
-      [name, description, groupId]
+      [name, description, groupId],
     );
     const respond = respondHanlder(
       { groupId: groupId, name: name, description: description },
       200,
-      "Group data has been updated"
+      "Group data has been updated",
     );
 
     return res.status(200).json(respond);

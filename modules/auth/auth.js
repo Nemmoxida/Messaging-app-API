@@ -14,7 +14,7 @@ export default function auth() {
     const { username, password } = req.body;
     const validateUser = await db.query(
       "SELECT * from accounts where username = $1 ",
-      [username]
+      [username],
     );
 
     if (!validateUser.rows[0]) {
@@ -30,11 +30,14 @@ export default function auth() {
 
     try {
       const token = jwt.sign(
-        { username: validateUser.rows[0].username },
+        {
+          username: validateUser.rows[0].username,
+          id: validateUser.rows[0].id,
+        },
         process.env.SECRET_KEY,
         {
           expiresIn: "1h",
-        }
+        },
       );
 
       const respond = respondHanlder({ token: token }, 200, "Auth Completed");

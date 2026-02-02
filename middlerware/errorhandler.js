@@ -5,8 +5,6 @@ export default function errorHandler(err, req, res, next) {
   const requestId = uuidv7();
   const requestTime = new Date().toISOString();
 
-  console.log(err);
-
   return res.status(statusCode).json({
     status: "Failed",
     statusCode: statusCode,
