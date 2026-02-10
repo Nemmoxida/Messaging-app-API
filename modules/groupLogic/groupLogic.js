@@ -1,5 +1,5 @@
 import connection from "../../database/db.js";
-import { clients } from "../websocket/handler/handlerMap.js";
+import { userSocket } from "../websocket/handler/handlerMap.js";
 import respondHanlder from "../controller/respondHandler.js";
 import { AppError } from "../../middlerware/customErrorObject.js";
 import { v4 as uuidv4 } from "uuid";

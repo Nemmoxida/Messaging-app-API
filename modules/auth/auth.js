@@ -36,7 +36,7 @@ export default function auth() {
         },
         process.env.SECRET_KEY,
         {
-          expiresIn: "1h",
+          expiresIn: "7d",
         },
       );
 

@@ -1,6 +1,11 @@
 import { WebSocketServer } from "ws";
-import handlers from "./handler/handlerMap.js";
-import { clients } from "./handler/handlerMap.js";
+import handlers, {
+  onlineGroupMembers,
+  socketUserMap,
+  userOnlineGroups,
+  userSocketMap,
+} from "./handler/handlerMap.js";
+import { userSocket } from "./handler/handlerMap.js";
 import jwt from "jsonwebtoken";
 import respondHandler from "./handler/respondHandlerWS.js";
 
@@ -13,7 +18,7 @@ export default function websocket(server) {
     socket.send("Connected");
 
     // set default client name
-    clients.set(socket, { Id: "Null" });
+    // userSocket.set(socket, { Id: "Null" });
 
     socket.on("message", (msg) => {
       let payload;
@@ -23,7 +28,7 @@ export default function websocket(server) {
         payload = JSON.parse(msg);
       } catch (error) {
         socket.send(
-          JSON.stringify({ type: "error", message: "Wrong JSON format" })
+          JSON.stringify({ type: "error", message: "Wrong JSON format" }),
         );
       }
 
@@ -39,13 +44,14 @@ export default function websocket(server) {
               status: "success",
               message: `Auth complete`,
             });
-            socket.send(JSON.stringify(respond));
+            return socket.send(JSON.stringify(respond));
           } catch (error) {
+            console.log(error);
             socket.send(
               JSON.stringify({
                 type: "Error",
                 message: "Invalid Token",
-              })
+              }),
             );
           }
         } else {
@@ -53,7 +59,7 @@ export default function websocket(server) {
             JSON.stringify({
               type: "error",
               message: "Access forbidden. No token detected",
-            })
+            }),
           );
           socket.close();
         }
@@ -66,24 +72,39 @@ export default function websocket(server) {
           handler(socket, payload);
         } else {
           socket.send(
-            JSON.stringify({ type: "error", message: "Invalid Method" })
+            JSON.stringify({ type: "error", message: "Invalid Method" }),
           );
         }
       }
+    });
+    // check connection to client
+    const pingClient = setInterval(() => {
+      if (socket.readyState === 1) {
+        socket.ping();
+        console.log("client alive");
+      } else {
+        clearInterval(pingClient);
+      }
+    }, 30000);
 
-      // check connection to client
-      const pingClient = setInterval(() => {
-        if (socket.readyState === 1) {
-          socket.ping();
-          console.log("client alive");
-        } else {
-          clearInterval(pingClient);
+    socket.on("close", () => {
+      // removing user cache
+      const userData = socketUserMap.get(socket);
+      const listGroupUser = userOnlineGroups.get(userData.id);
+      for (const userGroup of listGroupUser) {
+        const group = onlineGroupMembers.get(userGroup);
+        group.delete(userData.id);
+
+        // if there's no member online, remove the group from onlineGroupMembers Map
+        if (group.size == 0) {
+          onlineGroupMembers.delete(userGroup);
         }
-      }, 30000);
+      }
+      userOnlineGroups.delete(userData.id);
+      userSocketMap.delete(userData.id);
+      socketUserMap.delete(socket);
 
-      socket.on("close", () => {
-        console.log("client disconected");
-      });
+      console.log("client disconected");
     });
   });
 }

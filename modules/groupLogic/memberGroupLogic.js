@@ -1,6 +1,6 @@
 import connection from "../../database/db.js";
 import { AppError } from "../../middlerware/customErrorObject.js";
-import { clients } from "../websocket/handler/handlerMap.js";
+import { userSocket } from "../websocket/handler/handlerMap.js";
 import respondHanlder from "../controller/respondHandler.js";
 
 const db = connection;
