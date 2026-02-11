@@ -1,7 +1,7 @@
 import connection from "../../database/db.js";
 import { AppError } from "../../middlerware/customErrorObject.js";
-import { userSocket } from "../websocket/handler/handlerMap.js";
 import respondHanlder from "../controller/respondHandler.js";
+import notifyUserWs from "./notifyUserWs.js";
 
 const db = connection;
 
@@ -15,6 +15,8 @@ export async function addMember(req, res, next) {
       ["member", groupId, memberId],
     );
     const respond = respondHanlder(null, 201, "User added successfully");
+
+    notifyUserWs(memberId, groupId, "added", "You have been added to group: ");
 
     return res.status(201).json(respond);
   } catch (error) {
@@ -35,8 +37,14 @@ export async function kickMember(req, res, next) {
       [groupId, memberId],
     );
     const respond = respondHanlder(null, 200, "User kicked successfully");
+    notifyUserWs(
+      memberId,
+      groupId,
+      "kicked",
+      "You have been kicked from group: ",
+    );
 
-    return res.status(201).json(respond);
+    return res.status(200).json(respond);
   } catch (error) {
     if (error.code === "22P02") {
       // Foreign key violation: memberId does not exist in referenced table
@@ -59,6 +67,14 @@ export async function changeRoleMember(req, res, next) {
       "UPDATE group_member SET role = $1 WHERE group_id = $2 AND user_id = $3",
       [role, groupId, memberId],
     );
+
+    notifyUserWs(
+      memberId,
+      groupId,
+      "Role change",
+      `Your role has been change to ${role}`,
+    );
+
     const respond = respondHanlder(null, 200, "User role has been modified");
 
     return res.status(200).json(respond);

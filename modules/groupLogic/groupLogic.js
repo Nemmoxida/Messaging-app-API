@@ -1,8 +1,10 @@
 import connection from "../../database/db.js";
-import { userSocket } from "../websocket/handler/handlerMap.js";
+// import { userSocket } from "../websocket/handler/handlerMap.js";
 import respondHanlder from "../controller/respondHandler.js";
 import { AppError } from "../../middlerware/customErrorObject.js";
 import { v4 as uuidv4 } from "uuid";
+import { onlineGroupMembers } from "../websocket/handler/handlerMap.js";
+import respondHandler from "../websocket/handler/respondHandlerWS.js";
 
 const db = connection;
 
@@ -59,7 +61,7 @@ export function deleteGroup(req, res, next) {
 }
 
 export function changeGroupInfo(req, res, next) {
-  const { groupId, name, description } = req.body;
+  const { groupId, name, description, image } = req.body;
 
   // Check if groupId present in the payload
   if (!groupId) {
@@ -78,6 +80,26 @@ export function changeGroupInfo(req, res, next) {
       200,
       "Group data has been updated",
     );
+
+    const target = onlineGroupMembers.get(groupId);
+
+    if (target) {
+      const respondWs = respondHandler({
+        event: `Group: Change Info Group `,
+        status: "success",
+        message: "Group Info has been changed",
+        data: {
+          id: groupId,
+          name: name,
+          image: image,
+        },
+      });
+
+      for (const [key, value] of target) {
+        const memberSocket = value;
+        memberSocket.send(JSON.stringify(respondWs));
+      }
+    }
 
     return res.status(200).json(respond);
   } catch (error) {

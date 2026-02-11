@@ -34,7 +34,7 @@ const handlers = {
     );
 
     // adding member to cache for user group list
-    for (const membership of getUsermembership) {
+    for (const membership of getUserGroupData) {
       if (!onlineGroupMembers.get(membership.group_id)) {
         onlineGroupMembers.set(
           membership.group_id,
@@ -110,8 +110,6 @@ const handlers = {
 
   // group logic
   group: async (socket, payload) => {
-    const target = onlineGroupMembers.get(payload.targetGroup);
-
     // check if group exist
     if (!(await dbHandler.dbVerifyGroup(payload.targetGroup))) {
       return socket.send("No group exist");
@@ -146,6 +144,7 @@ const handlers = {
     });
 
     // sending to each member
+    const target = onlineGroupMembers.get(payload.targetGroup);
     if (target) {
       for (const [key, value] of target) {
         const memberSocket = value;

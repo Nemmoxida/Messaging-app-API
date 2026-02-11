@@ -1,4 +1,4 @@
-1. group logic(group message, create, delete, etc)
+1. group logic(group message, create, delete, etc)✅
     creating group: using HTTP request, and then server will notify related user using WS (using clients MAP object data)
 
 

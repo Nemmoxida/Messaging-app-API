@@ -5,7 +5,6 @@ import handlers, {
   userOnlineGroups,
   userSocketMap,
 } from "./handler/handlerMap.js";
-import { userSocket } from "./handler/handlerMap.js";
 import jwt from "jsonwebtoken";
 import respondHandler from "./handler/respondHandlerWS.js";
 
@@ -88,7 +87,7 @@ export default function websocket(server) {
     }, 30000);
 
     socket.on("close", () => {
-      // removing user cache
+      // removing user caches
       const userData = socketUserMap.get(socket);
       const listGroupUser = userOnlineGroups.get(userData.id);
       for (const userGroup of listGroupUser) {
