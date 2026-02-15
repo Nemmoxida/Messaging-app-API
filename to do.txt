@@ -5,12 +5,12 @@
 2. login ✅
 3. auth ✅
 4. message format ✅
-5. message offline gather
+5. message offline gather (message data, group data) X
 6. database for message ✅
-7. encryption (end 2 end)
-8. simple font end for testing
+7. encryption (end 2 end) X 
+8. simple font end for testing X
 
-database 
+database
 1. account
 2. message
 3. group
